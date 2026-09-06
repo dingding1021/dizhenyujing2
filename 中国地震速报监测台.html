@@ -1,0 +1,820 @@
+<!DOCTYPE html>
+<!-- saved from url=(0307)https://p6-flow-sign.byteimg.com/tos-cn-i-ik7evvg4ik/rc/pc/super_tool/75e203ea63264e98960261ad0576eff7.html?x-expires=1789910400&webview_progress_bar=1&rrcfp=f512b60b&rcl=2026090521153045C662BEBA417F4BAD9F&push_animated=1&lk3s=8e244e95&x-signature=XBn7NL96Ga%2Fuq3ZkiNqrbIoIajU%3D&show_loading=0&theme=light -->
+<html lang="zh-CN"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>中国地震速报监测台</title>
+<style>
+  :root {
+    --bg: #0b1520;
+    --panel: #101d2c;
+    --panel-2: #14243a;
+    --line: #1d3042;
+    --line-soft: #172839;
+    --text: #e8eef5;
+    --text-dim: #8ba3b8;
+    --text-faint: #5b7387;
+    --red: #e5484d;
+    --amber: #e8a33d;
+    --teal: #53c4b8;
+    --yellow: #e8c34d;
+    --orange: #e88a3d;
+    --mono: "SF Mono", "Cascadia Code", Consolas, "Roboto Mono", monospace;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC", sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body { background: var(--bg); color: var(--text); font-family: var(--sans); }
+
+  body {
+    min-height: 100vh;
+    background-image:
+      radial-gradient(1200px 500px at 85% -10%, rgba(83, 196, 184, 0.06), transparent 60%),
+      radial-gradient(900px 420px at -10% 110%, rgba(229, 72, 77, 0.05), transparent 60%);
+  }
+
+  .wrap { max-width: 1280px; margin: 0 auto; padding: 20px 20px 32px; }
+
+  /* ===== 顶栏 ===== */
+  header.top {
+    display: flex; align-items: flex-end; justify-content: space-between;
+    gap: 16px; flex-wrap: wrap;
+    padding: 4px 2px 14px;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .brand { display: flex; align-items: center; gap: 14px; min-width: 0; }
+
+  .brand-mark {
+    width: 46px; height: 46px; flex: 0 0 46px;
+    border: 1px solid var(--line); border-radius: 10px;
+    background: var(--panel);
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  .brand h1 {
+    font-size: 22px; font-weight: 800; letter-spacing: 1px;
+    display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap;
+  }
+  .brand h1 .en {
+    font-size: 12px; font-weight: 500; color: var(--text-faint);
+    letter-spacing: 2px; text-transform: uppercase;
+  }
+  .brand .sub {
+    margin-top: 4px; font-size: 12px; color: var(--text-dim);
+    display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  }
+  .brand .sub .dot {
+    width: 7px; height: 7px; border-radius: 50%; background: var(--red);
+    animation: blink 2s ease-in-out infinite;
+  }
+  @keyframes blink { 0%,100% { opacity: 1; } 50% { opacity: .25; } }
+
+  .top-actions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+
+  .update-time { font-family: var(--mono); font-size: 12px; color: var(--text-dim); }
+  .update-time b { color: var(--teal); font-weight: 600; }
+
+  .btn {
+    appearance: none; border: 1px solid var(--line); border-radius: 8px;
+    background: var(--panel); color: var(--text);
+    font-family: var(--sans); font-size: 13px; font-weight: 600;
+    padding: 8px 14px; cursor: pointer;
+    display: inline-flex; align-items: center; gap: 7px;
+    transition: border-color .15s, background .15s;
+  }
+  .btn:hover { border-color: var(--teal); background: var(--panel-2); }
+  .btn.primary { border-color: var(--red); color: #ffd9da; background: rgba(229,72,77,.12); }
+  .btn.primary:hover { background: rgba(229,72,77,.2); }
+  .btn:disabled { opacity: .45; cursor: not-allowed; }
+
+  /* 自动刷新开关 */
+  .switch {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: 12px; color: var(--text-dim); cursor: pointer; user-select: none;
+  }
+  .switch .track {
+    width: 34px; height: 19px; border-radius: 10px; background: var(--line);
+    position: relative; transition: background .2s;
+  }
+  .switch .track::after {
+    content: ""; position: absolute; top: 2px; left: 2px;
+    width: 15px; height: 15px; border-radius: 50%; background: #c9d6e2;
+    transition: transform .2s;
+  }
+  .switch input { display: none; }
+  .switch input:checked + .track { background: rgba(83,196,184,.55); }
+  .switch input:checked + .track::after { transform: translateX(15px); background: var(--teal); }
+
+  /* ===== 震波签名 ===== */
+  .seismo {
+    margin-top: 14px; height: 44px;
+    border: 1px solid var(--line); border-radius: 8px;
+    background: var(--panel);
+    overflow: hidden; position: relative;
+  }
+  .seismo svg { display: block; width: 100%; height: 100%; }
+  .seismo .trace { fill: none; stroke: var(--red); stroke-width: 1.4; }
+  .seismo .cursor { fill: var(--red); }
+  .seismo .label {
+    position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+    font-family: var(--mono); font-size: 10px; letter-spacing: 2px; color: var(--text-faint);
+    background: var(--panel); padding: 0 6px;
+  }
+
+  /* ===== 主体网格 ===== */
+  main.grid {
+    margin-top: 14px; display: grid;
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+    gap: 14px; align-items: start;
+  }
+
+  .panel {
+    background: var(--panel); border: 1px solid var(--line); border-radius: 12px;
+    overflow: hidden;
+  }
+  .panel-head {
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    padding: 12px 16px; border-bottom: 1px solid var(--line);
+  }
+  .panel-head h2 {
+    font-size: 13px; font-weight: 700; letter-spacing: 1.5px; color: var(--text);
+    display: flex; align-items: center; gap: 8px;
+  }
+  .panel-head h2 .tag {
+    font-family: var(--mono); font-size: 10px; font-weight: 500;
+    color: var(--text-faint); letter-spacing: 1px;
+    border: 1px solid var(--line); padding: 2px 6px; border-radius: 5px;
+  }
+  .panel-head .hint { font-size: 11px; color: var(--text-faint); }
+
+  /* ===== 地图 ===== */
+  .map-wrap { padding: 8px; }
+  .map-frame { width: 100%; overflow: hidden; border-radius: 8px; }
+  .map-frame svg { display: block; width: 100%; height: auto; }
+  .map-grid-line { stroke: var(--line-soft); stroke-width: 1; }
+  .map-border { fill: rgba(83,196,184,0.03); stroke: #2a4a5f; stroke-width: 1.4; }
+  .map-island { fill: rgba(83,196,184,0.05); stroke: #2a4a5f; stroke-width: 1; }
+  .quake-dot { stroke: #0b1520; stroke-width: 1.2; cursor: pointer; transition: opacity .15s; }
+  .quake-dot:hover { opacity: .7; }
+  .quake-dot.active { stroke: #fff; stroke-width: 2; }
+  .ripple { fill: none; stroke: var(--red); stroke-width: 1.6; animation: ripple 1.8s ease-out forwards; pointer-events: none; }
+  @keyframes ripple { from { r: 8; opacity: .95; } to { r: 46; opacity: 0; } }
+  .map-legend {
+    display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+    padding: 6px 10px 4px; font-size: 11px; color: var(--text-dim);
+  }
+  .map-legend .lg { display: inline-flex; align-items: center; gap: 6px; }
+  .map-legend .sw { display: inline-block; width: 10px; height: 10px; border-radius: 50%; }
+  .map-note { padding: 0 10px 10px; font-size: 10px; color: var(--text-faint); }
+
+  /* ===== 详情卡 ===== */
+  .detail { padding: 12px 16px; border-top: 1px solid var(--line); display: none; }
+  .detail.show { display: block; }
+  .detail .mag-line { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+  .detail .mag { font-family: var(--mono); font-size: 34px; font-weight: 700; line-height: 1; }
+  .detail .mag small { font-size: 14px; color: var(--text-dim); font-weight: 500; }
+  .detail .loc { font-size: 15px; font-weight: 700; margin-top: 2px; }
+  .detail .fields {
+    margin-top: 10px; display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px;
+  }
+  .detail .f { background: var(--panel-2); border: 1px solid var(--line); border-radius: 8px; padding: 7px 10px; }
+  .detail .f .k { font-size: 10px; color: var(--text-faint); letter-spacing: 1px; }
+  .detail .f .v { font-family: var(--mono); font-size: 13px; color: var(--text); margin-top: 2px; }
+
+  /* ===== 列表 ===== */
+  .filter-row { padding: 10px 16px; border-bottom: 1px solid var(--line); display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .filter-row .cap { font-size: 11px; color: var(--text-faint); margin-right: 2px; }
+  .chip {
+    appearance: none; border: 1px solid var(--line); border-radius: 7px;
+    background: transparent; color: var(--text-dim);
+    font-size: 12px; font-weight: 600; padding: 5px 11px; cursor: pointer;
+    font-family: var(--mono);
+  }
+  .chip:hover { color: var(--text); border-color: var(--text-dim); }
+  .chip.on { background: rgba(229,72,77,.14); border-color: var(--red); color: #ffd9da; }
+
+  .list { max-height: 520px; overflow-y: auto; }
+  .list-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 11px 16px; border-bottom: 1px solid var(--line-soft);
+    cursor: pointer; transition: background .12s;
+  }
+  .list-item:last-child { border-bottom: none; }
+  .list-item:hover { background: var(--panel-2); }
+  .list-item.active { background: rgba(83,196,184,.08); box-shadow: inset 3px 0 0 var(--teal); }
+  .list-item .mag-badge {
+    flex: 0 0 46px; height: 46px; border-radius: 9px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    font-family: var(--mono); line-height: 1;
+  }
+  .list-item .mag-badge .m { font-size: 18px; font-weight: 700; }
+  .list-item .mag-badge .t { font-size: 9px; margin-top: 3px; opacity: .85; }
+  .list-item .body { min-width: 0; flex: 1; }
+  .list-item .body .loc { font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .list-item .body .meta { font-family: var(--mono); font-size: 11px; color: var(--text-faint); margin-top: 3px; display: flex; gap: 10px; flex-wrap: wrap; }
+  .list-item .ripple-flag { flex: 0 0 auto; width: 8px; height: 8px; border-radius: 50%; background: transparent; }
+  .list-item.playing .ripple-flag { background: var(--red); animation: blink 1s infinite; }
+
+  .status-line { padding: 10px 16px; font-size: 11px; color: var(--text-faint); display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+  .status-line .err { color: #ffb3b5; }
+  .status-line a { color: var(--teal); text-decoration: none; }
+
+  .empty { padding: 30px 16px; text-align: center; color: var(--text-faint); font-size: 13px; }
+
+  /* ===== 回放 ===== */
+  .replay { padding: 10px 16px; border-top: 1px solid var(--line); display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .replay .info { font-size: 11px; color: var(--text-dim); flex: 1; min-width: 160px; }
+  .replay .info b { color: var(--amber); }
+
+  /* ===== 页脚 ===== */
+  footer {
+    margin-top: 18px; padding: 14px 4px 0; border-top: 1px solid var(--line);
+    font-size: 11px; color: var(--text-faint); line-height: 1.8;
+  }
+  footer .warn { color: var(--amber); }
+
+  /* ===== 滚动条 ===== */
+  .list::-webkit-scrollbar { width: 8px; }
+  .list::-webkit-scrollbar-thumb { background: var(--line); border-radius: 4px; }
+  .list::-webkit-scrollbar-track { background: transparent; }
+
+  /* ===== 移动端 ===== */
+  @media (max-width: 820px) {
+    main.grid { grid-template-columns: 1fr; }
+    .brand h1 { font-size: 18px; }
+    .list { max-height: 400px; }
+    .map-legend { gap: 10px; }
+  }
+  @media (max-width: 480px) {
+    .wrap { padding: 14px 12px 24px; }
+    .top-actions { width: 100%; }
+    .detail .mag { font-size: 28px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- ===== 顶栏 ===== -->
+  <header class="top">
+    <div class="brand">
+      <div class="brand-mark">
+        <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#e5484d" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M2 12c2.2-6 4.4-6 6.6 0s4.4 6 6.6 0 4.4-6 6.8 0"></path>
+          <line x1="2" y1="19" x2="22" y2="19" stroke="#53c4b8" stroke-width="1.2"></line>
+        </svg>
+      </div>
+      <div>
+        <h1>中国地震速报 <span class="en">Quake Bulletin</span></h1>
+        <div class="sub">
+          <span class="dot"></span>
+          <span>台网数据监测中</span>
+          <span>·</span>
+          <span>数据源：中国地震台网速报（第三方镜像接口）</span>
+        </div>
+      </div>
+    </div>
+    <div class="top-actions">
+      <span class="update-time">更新于 <b id="updateTime">08:14:54</b></span>
+      <label class="switch">
+        <input type="checkbox" id="autoRefresh" checked="">
+        <span class="track"></span>
+        <span>自动刷新 60s</span>
+      </label>
+      <button class="btn" id="refreshBtn" type="button">
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 12a9 9 0 1 1-2.64-6.36"></path>
+          <polyline points="21 3 21 9 15 9"></polyline>
+        </svg>
+        刷新数据
+      </button>
+    </div>
+  </header>
+
+  <!-- ===== 震波签名 ===== -->
+  <div class="seismo" aria-hidden="true">
+    <svg id="seismoSvg" preserveAspectRatio="none" viewBox="0 0 1280 44"><polyline points="0.0,22.0 6.0,22.0 12.0,22.0 18.0,22.0 24.0,22.0 30.0,22.0 36.0,22.0 42.0,22.0 48.0,22.0 54.0,22.0 60.0,22.0 66.0,22.0 72.0,22.0 78.0,22.0 84.0,21.7 90.0,18.2 96.0,15.5 102.0,14.2 108.0,14.5 114.0,15.7 120.0,17.1 126.0,18.0 132.0,18.0 138.0,17.3 144.0,16.4 150.0,16.1 156.0,17.0 162.0,19.4 168.0,22.7 174.0,26.2 180.0,28.9 186.0,30.3 192.0,30.1 198.0,28.8 204.0,27.1 210.0,25.9 216.0,25.6 222.0,26.1 228.0,26.9 234.0,27.2 240.0,26.3 246.0,24.2 252.0,21.0 258.0,17.5 264.0,14.7 270.0,13.3 276.0,13.5 282.0,14.8 288.0,16.7 294.0,18.2 300.0,18.8 306.0,18.6 312.0,17.9 318.0,17.6 324.0,18.3 330.0,20.3 336.0,23.4 342.0,26.8 348.0,29.6 354.0,31.1 360.0,30.9 366.0,29.5 372.0,27.5 378.0,25.7 384.0,24.7 390.0,24.7 396.0,25.3 402.0,25.6 408.0,25.0 414.0,23.2 420.0,20.3 426.0,17.0 432.0,14.2 438.0,12.6 444.0,12.7 450.0,14.2 456.0,16.4 462.0,18.5 468.0,19.7 474.0,20.0 480.0,19.6 486.0,19.2 492.0,19.7 498.0,21.3 504.0,24.0 510.0,27.2 516.0,30.0 522.0,31.6 528.0,31.5 534.0,30.0 540.0,27.7 546.0,25.4 552.0,23.8 558.0,23.3 564.0,23.6 570.0,23.9 576.0,23.6 582.0,22.2 588.0,19.7 594.0,16.6 600.0,13.9 606.0,12.3 612.0,12.3 618.0,13.8 624.0,16.3 630.0,18.8 636.0,20.6 642.0,21.4 648.0,21.3 654.0,21.0 660.0,21.1 666.0,22.3 672.0,24.6 678.0,27.5 684.0,30.2 690.0,31.8 696.0,31.8 702.0,30.2 708.0,27.7 714.0,24.9 720.0,22.9 726.0,21.9 732.0,21.8 738.0,22.2 744.0,22.2 750.0,21.2 756.0,19.2 762.0,16.5 768.0,13.9 774.0,12.2 780.0,12.2 786.0,13.7 792.0,16.4 798.0,19.3 804.0,21.6 810.0,22.9 816.0,23.1 822.0,22.7 828.0,22.6 834.0,23.3 840.0,25.1 846.0,27.6 852.0,30.1 858.0,31.7 864.0,31.7 870.0,30.2 876.0,27.5 882.0,24.4 888.0,21.9 894.0,20.4 900.0,20.1 906.0,20.4 912.0,20.7 918.0,20.2 924.0,18.7 930.0,16.4 936.0,14.1 942.0,12.5 948.0,12.4 954.0,13.9 960.0,16.7 966.0,19.9 972.0,22.6 978.0,24.3 984.0,24.8 990.0,24.4 996.0,24.0 1002.0,24.3 1008.0,25.5 1014.0,27.5 1020.0,29.7 1026.0,31.2 1032.0,31.4 1038.0,29.9 1044.0,27.1 1050.0,23.8 1056.0,20.9 1062.0,19.0 1068.0,18.4 1074.0,18.7 1080.0,19.2 1086.0,19.3 1092.0,18.4 1098.0,16.6 1104.0,14.6 1110.0,13.1 1116.0,12.9 1122.0,14.3 1128.0,17.1 1134.0,20.5 1140.0,23.6 1146.0,25.6 1152.0,26.4 1158.0,26.1 1164.0,25.4 1170.0,25.2 1176.0,25.8 1182.0,27.2 1188.0,29.1 1194.0,30.5 1200.0,30.7 1206.0,29.4 1212.0,26.6 1218.0,23.2 1224.0,20.0 1230.0,17.7 1236.0,16.8 1242.0,22.0 1248.0,22.0 1254.0,22.0 1260.0,22.0 1266.0,22.0 1272.0,22.0 1278.0,22.0" class="trace"></polyline><circle cx="1250" cy="22" r="2.6" class="cursor"></circle></svg>
+    <span class="label">SEISMOGRAM · 监测波形</span>
+  </div>
+
+  <!-- ===== 主体 ===== -->
+  <main class="grid">
+
+    <!-- 左：地图 -->
+    <section class="panel">
+      <div class="panel-head">
+        <h2>震中分布 <span class="tag">EPICENTER</span></h2>
+        <span class="hint">点击圆点查看详情</span>
+      </div>
+      <div class="map-wrap">
+        <div class="map-frame">
+          <svg id="mapSvg" viewBox="0 0 900 520" role="img" aria-label="震中分布示意图"><line x1="65" y1="0" x2="65" y2="494" class="map-grid-line"></line><line x1="195" y1="0" x2="195" y2="494" class="map-grid-line"></line><line x1="325" y1="0" x2="325" y2="494" class="map-grid-line"></line><line x1="455" y1="0" x2="455" y2="494" class="map-grid-line"></line><line x1="585" y1="0" x2="585" y2="494" class="map-grid-line"></line><line x1="715" y1="0" x2="715" y2="494" class="map-grid-line"></line><line x1="845" y1="0" x2="845" y2="494" class="map-grid-line"></line><line x1="0" y1="455" x2="858" y2="455" class="map-grid-line"></line><line x1="0" y1="390" x2="858" y2="390" class="map-grid-line"></line><line x1="0" y1="325" x2="858" y2="325" class="map-grid-line"></line><line x1="0" y1="260" x2="858" y2="260" class="map-grid-line"></line><line x1="0" y1="195" x2="858" y2="195" class="map-grid-line"></line><line x1="0" y1="130" x2="858" y2="130" class="map-grid-line"></line><line x1="0" y1="65" x2="858" y2="65" class="map-grid-line"></line><line x1="0" y1="0" x2="858" y2="0" class="map-grid-line"></line><path d="M682.5 19.5 L819.0 80.6 L845.0 88.4 L793.0 158.6 L704.6 195.0 L665.6 223.6 L683.8 228.8 L663.0 253.5 L673.4 266.5 L681.2 312.0 L668.2 338.0 L644.8 371.8 L613.6 410.8 L527.8 439.4 L496.6 434.2 L470.6 416.0 L408.2 436.8 L377.0 396.5 L348.4 348.4 L286.0 347.1 L240.5 353.6 L182.0 351.0 L130.0 322.4 L104.0 253.5 L59.8 231.4 L44.2 197.6 L78.0 156.0 L130.0 130.0 L201.5 101.4 L273.0 98.8 L221.0 75.4 L338.0 70.2 L403.0 93.6 L455.0 71.5 L520.0 67.6 L598.0 58.5 L637.0 67.6 L650.0 39.0 L682.5 19.5 Z" class="map-border"></path><ellipse cx="513.5" cy="465.4" rx="14.3" ry="26" class="map-island"></ellipse><ellipse cx="663" cy="405.59999999999997" rx="11.700000000000001" ry="22.099999999999998" class="map-island"></ellipse><text x="8" y="20" fill="#5b7387" font-size="12" font-family="monospace">E70° — E135°</text><text x="8" y="512" fill="#5b7387" font-size="12" font-family="monospace">N18° — N55°</text><g><circle cx="181.60999999999999" cy="166.26999999999998" r="5.404999999999999" fill="#53c4b8" class="quake-dot" data-idx="0"></circle><circle cx="332.6700000000001" cy="222.69000000000003" r="5.404999999999999" fill="#53c4b8" class="quake-dot" data-idx="1"></circle><circle cx="454.21999999999997" cy="346.32" r="5.15" fill="#53c4b8" class="quake-dot" data-idx="2"></circle><circle cx="450.8400000000001" cy="343.72" r="5.234999999999999" fill="#53c4b8" class="quake-dot" data-idx="3"></circle><circle cx="332.6700000000001" cy="223.07999999999996" r="6.9350000000000005" fill="#e88a3d" class="quake-dot" data-idx="4"></circle><circle cx="447.5900000000001" cy="300.17" r="6.68" fill="#e8c34d" class="quake-dot" data-idx="5"></circle><circle cx="-3114.15" cy="38.35000000000004" r="7.955" fill="#e5484d" class="quake-dot" data-idx="6"></circle><circle cx="134.42000000000004" cy="306.15000000000003" r="6.425" fill="#e8c34d" class="quake-dot" data-idx="7"></circle><circle cx="222.03999999999996" cy="146.64000000000001" r="5.83" fill="#53c4b8" class="quake-dot" data-idx="8"></circle><circle cx="170.43" cy="160.42000000000004" r="5.15" fill="#53c4b8" class="quake-dot" data-idx="9"></circle><circle cx="177.8400000000001" cy="194.73999999999995" r="6" fill="#e8c34d" class="quake-dot" data-idx="10"></circle><circle cx="-1272.05" cy="1444.3" r="7.869999999999999" fill="#e5484d" class="quake-dot" data-idx="11"></circle><circle cx="153.2700000000001" cy="139.48999999999995" r="5.404999999999999" fill="#53c4b8" class="quake-dot" data-idx="12"></circle><circle cx="228.4099999999999" cy="157.69000000000003" r="5.49" fill="#53c4b8" class="quake-dot" data-idx="13"></circle><circle cx="177.8400000000001" cy="194.87000000000003" r="5.234999999999999" fill="#53c4b8" class="quake-dot" data-idx="14"></circle><circle cx="175.36999999999995" cy="195.12999999999997" r="5.32" fill="#53c4b8" class="quake-dot" data-idx="15"></circle><circle cx="136.75999999999993" cy="166.39999999999998" r="5.83" fill="#53c4b8" class="quake-dot" data-idx="16"></circle><circle cx="444.6" cy="367.25" r="5.15" fill="#53c4b8" class="quake-dot" data-idx="17"></circle><circle cx="-3214.9" cy="1106.17" r="7.529999999999999" fill="#e88a3d" class="quake-dot" data-idx="18"></circle><circle cx="176.0200000000001" cy="182.12999999999997" r="5.234999999999999" fill="#53c4b8" class="quake-dot" data-idx="19"></circle><circle cx="469.82" cy="218.53000000000003" r="5.404999999999999" fill="#53c4b8" class="quake-dot" data-idx="20"></circle><circle cx="137.0200000000001" cy="166.14000000000001" r="5.234999999999999" fill="#53c4b8" class="quake-dot" data-idx="21"></circle><circle cx="136.75999999999993" cy="166.39999999999998" r="6.17" fill="#e8c34d" class="quake-dot" data-idx="22"></circle><circle cx="454.74000000000007" cy="346.71000000000004" r="5.15" fill="#53c4b8" class="quake-dot" data-idx="23"></circle><circle cx="457.86" cy="335.01" r="6.9350000000000005" fill="#e88a3d" class="quake-dot" data-idx="24"></circle><circle cx="-255.05999999999997" cy="542.49" r="7.699999999999999" fill="#e5484d" class="quake-dot" data-idx="25"></circle><circle cx="510.64" cy="397.53999999999996" r="5.83" fill="#53c4b8" class="quake-dot" data-idx="26"></circle><circle cx="221.39000000000001" cy="282.36" r="6.595000000000001" fill="#e8c34d" class="quake-dot" data-idx="27"></circle><circle cx="450.71000000000004" cy="344.24" r="5.404999999999999" fill="#53c4b8" class="quake-dot" data-idx="28"></circle><circle cx="668.72" cy="418.46999999999997" r="6.425" fill="#e8c34d" class="quake-dot" data-idx="29"></circle><circle cx="-1860.0399999999997" cy="627.25" r="7.105" fill="#e88a3d" class="quake-dot" data-idx="30"></circle><circle cx="671.1899999999999" cy="421.07" r="7.275" fill="#e88a3d" class="quake-dot" data-idx="31"></circle><circle cx="746.72" cy="802.62" r="7.615" fill="#e88a3d" class="quake-dot" data-idx="32"></circle><circle cx="454.74000000000007" cy="346.71000000000004" r="6.595000000000001" fill="#e8c34d" class="quake-dot" data-idx="33"></circle><circle cx="949" cy="172.89999999999998" r="7.699999999999999" fill="#e5484d" class="quake-dot" data-idx="34"></circle><circle cx="60.06000000000006" cy="235.43" r="6.17" fill="#e8c34d" class="quake-dot" data-idx="35"></circle><circle cx="913.25" cy="248.3" r="7.529999999999999" fill="#e88a3d" class="quake-dot" data-idx="36"></circle><circle cx="-1524.8999999999999" cy="1500.8500000000001" r="7.699999999999999" fill="#e5484d" class="quake-dot" data-idx="37"></circle><circle cx="677.04" cy="398.06" r="6.425" fill="#e8c34d" class="quake-dot" data-idx="38"></circle><circle cx="459.81000000000006" cy="239.46000000000004" r="5.234999999999999" fill="#53c4b8" class="quake-dot" data-idx="39"></circle></g></svg>
+        </div>
+      </div>
+      <div class="map-legend" id="legend"><span class="lg"><span class="sw" style="background:#53c4b8"></span>M&lt;4</span><span class="lg"><span class="sw" style="background:#e8c34d"></span>M4–4.9</span><span class="lg"><span class="sw" style="background:#e88a3d"></span>M5–5.9</span><span class="lg"><span class="sw" style="background:#e5484d"></span>M≥6</span><span>当前显示 40 个震中</span></div>
+      <div class="map-note">地图为简化轮廓示意（不含行政区划边界），仅用于标示震中相对位置。</div>
+
+      <!-- 详情卡 -->
+      <div class="detail" id="detail"></div>
+    </section>
+
+    <!-- 右：列表 -->
+    <section class="panel">
+      <div class="panel-head">
+        <h2>最新速报记录 <span class="tag">LIST</span></h2>
+        <span class="hint" id="countLabel">40 条</span>
+      </div>
+      <div class="filter-row">
+        <span class="cap">震级筛选</span>
+        <button class="chip on" data-min="0" type="button">全部</button>
+        <button class="chip" data-min="3" type="button">M≥3</button>
+        <button class="chip" data-min="4" type="button">M≥4</button>
+        <button class="chip" data-min="5" type="button">M≥5</button>
+        <button class="chip" data-min="6" type="button">M≥6</button>
+      </div>
+      <div class="list" id="list"><div class="list-item" data-idx="0"><div class="mag-badge" style="background:rgba(83,196,184,.13);color:#53c4b8"><span class="m">3.3</span><span class="t">MAG</span></div><div class="body"><div class="loc">新疆巴音郭楞州轮台县</div><div class="meta"><span>09-05 21:28</span><span>21 km</span><span>烈度 4</span></div></div><div class="ripple-flag"></div></div><div class="list-item" data-idx="1"><div class="mag-badge" style="background:rgba(83,196,184,.13);color:#53c4b8"><span class="m">3.3</span><span class="t">MAG</span></div><div class="body"><div class="loc">青海海西州直辖区</div><div class="meta"><span>09-05 16:28</span><span>10 km</span><span>烈度 4</span></div></div><div class="ripple-flag"></div></div><div class="list-item" data-idx="2"><div class="mag-badge" style="background:rgba(83,196,184,.13);color:#53c4b8"><span class="m">3.0</span><span class="t">MAG</span></div><div class="body"><div class="loc">四川宜宾市长宁县</div><div class="meta"><span>09-04 22:03</span><span>5 km</span><span>烈度 4</span></div></div><div class="ripple-flag"></div></div><div class="list-item" data-idx="3"><div class="mag-badge" style="background:rgba(83,196,184,.13);color:#53c4b8"><span class="m">3.1</span><span class="t">MAG</span></div><div class="body"><div class="loc">四川宜宾市高县</div><div class="meta"><span>09-04 18:44</span><span>5 km</span><span>烈度 4</span></div></div><div class="ripple-flag"></div></div><div class="list-item" data-idx="4"><div class="mag-badge" style="background:rgba(232,138,61,.16);color:#e88a3d"><span class="m">5.1</span><span class="t">MAG</span></div><div class="body"><div class="loc">青海海西州直辖区</div><div class="meta"><span>09-04 01:04</span><span>10 km</span><span>烈度 7</span></div></div><div class="ripple-flag"></div></div><div class="list-item" data-idx="5"><div class="mag-badge" style="background:rgba(232,195,77,.14);color:#e8c34d"><span class="m">4.8</span><span class="t">MAG</span></div><div class="body"><div class="loc">四川绵阳市北川县</div><div class="meta"><span>09-03 19:39</span><span>10 km</span><span>烈度 6</span></div></div><div class="ripple-flag"></div></div><div class="list-item" data-idx="6"><div class="mag-badge" style="background:rgba(229,72,77,.16);color:#e5484d"><span class="m">6.3</span><span class="t">MAG</span></div><div class="body"><div class="loc">福克斯群岛</div><div class="meta"><span>09-03 19:17</span><span>10 km</span><span>烈度 8</span></div></div><div class="ripple-flag"></div></div><div class="list-item" data-idx="7"><div class="mag-badge" style="background:rgba(232,195,77,.14);color:#e8c34d"><span class="m">4.5</span><span class="t">MAG</span></div><div class="body"><div class="loc">西藏阿里地区噶尔县</div><div class="meta"><span>09-03 16:16</span><span>10 km</span><span>烈度 6</span></div></div><div class="ripple-flag"></div></div><div class="list-item" data-idx="8"><div class="mag-badge" style="background:rgba(83,196,184,.13);color:#53c4b8"><span class="m">3.8</span><span class="t">MAG</span></div><div class="body"><div class="loc">新疆昌吉州昌吉市</div><div class="meta"><span>09-03 14:18</span><span>25 km</span><span>烈度 4</span></div></div><div class="ripple-flag"></div></div><div class="list-item" data-idx="9"><div class="mag-badge" style="background:rgba(83,196,184,.13);color:#53c4b8"><span class="m">3.0</span><span class="t">MAG</span></div><div class="body"><div class="loc">新疆巴音郭楞州和静县</div><div class="meta"><span>09-03 12:40</span><span>20 km</span><span>烈度 4</span></div></div><div class="ripple-flag"></div></div><div class="list-item" data-idx="10"><div class="mag-badge" style="background:rgba(232,195,77,.14);color:#e8c34d"><span class="m">4.0</span><span class="t">MAG</span></div><div class="body"><div class="loc">新疆阿克苏地区沙雅县</div><div class="meta"><span>09-03 10:45</span><span>25 km</span><span>烈度 5</span></div></div><div class="ripple-flag"></div></div><div class="list-item" data-idx="11"><div class="mag-badge" style="background:rgba(229,72,77,.16);color:#e5484d"><span class="m">6.2</span><span class="t">MAG</span></div><div class="body"><div class="loc">南桑威奇群岛地区</div><div class="meta"><span>09-03 07:47</span><span>120 km</span><span>烈度 6</span></div></div><div class="ripple-flag"></div></div><div class="list-item" data-idx="12"><div class="mag-badge" style="background:rgba(83,196,184,.13);color:#53c4b8"><span class="m">3.3</span><span class="t">MAG</span></div><div class="body"><div class="loc">新疆伊犁州伊宁县</div><div class="meta"><span>09-02 01:58</span><span>22 km</span><span>烈度 4</span></div></div><div class="ripple-flag"></div></div><div class="list-item" data-idx="13"><div class="mag-badge" style="background:rgba(83,196,184,.13);color:#53c4b8"><span class="m">3.4</span><span class="t">MAG</span></div><div class="body"><div class="loc">新疆吐鲁番市托克逊县</div><div class="meta"><span>09-01 20:34</span><span>18 km</span><span>烈度 4</span></div></div><div class="ripple-flag"></div></div><div class="list-item" data-idx="14"><div class="mag-badge" style="background:rgba(83,196,184,.13);color:#53c4b8"><span class="m">3.1</span><span class="t">MAG</span></div><div class="body"><div class="loc">新疆阿克苏地区沙雅县</div><div class="meta"><span>08-31 02:29</span><span>30 km</span><span>烈度 3</span></div></div><div class="ripple-flag"></div></div><div class="list-item" data-idx="15"><div class="mag-badge" style="background:rgba(83,196,184,.13);color:#53c4b8"><span class="m">3.2</span><span class="t">MAG</span></div><div class="body"><div class="loc">新疆阿克苏地区沙雅县</div><div class="meta"><span>08-31 00:25</span><span>10 km</span><span>烈度 4</span></div></div><div class="ripple-flag"></div></div><div class="list-item" data-idx="16"><div class="mag-badge" style="background:rgba(83,196,184,.13);color:#53c4b8"><span class="m">3.8</span><span class="t">MAG</span></div><div class="body"><div class="loc">新疆阿克苏地区温宿县</div><div class="meta"><span>08-30 22:50</span><span>10 km</span><span>烈度 5</span></div></div><div class="ripple-flag"></div></div><div class="list-item" data-idx="17"><div class="mag-badge" style="background:rgba(83,196,184,.13);color:#53c4b8"><span class="m">3.0</span><span class="t">MAG</span></div><div class="body"><div class="loc">贵州毕节市威宁县</div><div class="meta"><span>08-30 18:32</span><span>10 km</span><span>烈度 5</span></div></div><div class="ripple-flag"></div></div><div class="list-item" data-idx="18"><div class="mag-badge" style="background:rgba(232,138,61,.16);color:#e88a3d"><span class="m">5.8</span><span class="t">MAG</span></div><div class="body"><div class="loc">新西兰克马德克群岛</div><div class="meta"><span>08-30 17:02</span><span>50 km</span><span>烈度 7</span></div></div><div class="ripple-flag"></div></div><div class="list-item" data-idx="19"><div class="mag-badge" style="background:rgba(83,196,184,.13);color:#53c4b8"><span class="m">3.1</span><span class="t">MAG</span></div><div class="body"><div class="loc">新疆阿克苏地区沙雅县</div><div class="meta"><span>08-30 08:05</span><span>21 km</span><span>烈度 4</span></div></div><div class="ripple-flag"></div></div><div class="list-item" data-idx="20"><div class="mag-badge" style="background:rgba(83,196,184,.13);color:#53c4b8"><span class="m">3.3</span><span class="t">MAG</span></div><div class="body"><div class="loc">宁夏银川市永宁县</div><div class="meta"><span>08-30 00:25</span><span>15 km</span><span>烈度 5</span></div></div><div class="ripple-flag"></div></div><div class="list-item" data-idx="21"><div class="mag-badge" style="background:rgba(83,196,184,.13);color:#53c4b8"><span class="m">3.1</span><span class="t">MAG</span></div><div class="body"><div class="loc">新疆阿克苏地区温宿县</div><div class="meta"><span>08-29 06:36</span><span>10 km</span><span>烈度 4</span></div></div><div class="ripple-flag"></div></div><div class="list-item" data-idx="22"><div class="mag-badge" style="background:rgba(232,195,77,.14);color:#e8c34d"><span class="m">4.2</span><span class="t">MAG</span></div><div class="body"><div class="loc">新疆阿克苏地区温宿县</div><div class="meta"><span>08-29 06:07</span><span>10 km</span><span>烈度 5</span></div></div><div class="ripple-flag"></div></div><div class="list-item" data-idx="23"><div class="mag-badge" style="background:rgba(83,196,184,.13);color:#53c4b8"><span class="m">3.0</span><span class="t">MAG</span></div><div class="body"><div class="loc">四川宜宾市长宁县</div><div class="meta"><span>08-28 16:43</span><span>5 km</span><span>烈度 4</span></div></div><div class="ripple-flag"></div></div><div class="list-item" data-idx="24"><div class="mag-badge" style="background:rgba(232,138,61,.16);color:#e88a3d"><span class="m">5.1</span><span class="t">MAG</span></div><div class="body"><div class="loc">四川内江市隆昌市</div><div class="meta"><span>08-28 13:13</span><span>6 km</span><span>烈度 7</span></div></div><div class="ripple-flag"></div></div><div class="list-item" data-idx="25"><div class="mag-badge" style="background:rgba(229,72,77,.16);color:#e5484d"><span class="m">6.0</span><span class="t">MAG</span></div><div class="body"><div class="loc">亚丁湾</div><div class="meta"><span>08-28 05:07</span><span>10 km</span><span>烈度 8</span></div></div><div class="ripple-flag"></div></div><div class="list-item" data-idx="26"><div class="mag-badge" style="background:rgba(83,196,184,.13);color:#53c4b8"><span class="m">3.8</span><span class="t">MAG</span></div><div class="body"><div class="loc">广西柳州市柳南区</div><div class="meta"><span>08-28 00:31</span><span>10 km</span><span>烈度 5</span></div></div><div class="ripple-flag"></div></div><div class="list-item" data-idx="27"><div class="mag-badge" style="background:rgba(232,195,77,.14);color:#e8c34d"><span class="m">4.7</span><span class="t">MAG</span></div><div class="body"><div class="loc">西藏那曲市尼玛县</div><div class="meta"><span>08-27 22:45</span><span>9 km</span><span>烈度 6</span></div></div><div class="ripple-flag"></div></div><div class="list-item" data-idx="28"><div class="mag-badge" style="background:rgba(83,196,184,.13);color:#53c4b8"><span class="m">3.3</span><span class="t">MAG</span></div><div class="body"><div class="loc">四川宜宾市高县</div><div class="meta"><span>08-27 10:34</span><span>8 km</span><span>烈度 4</span></div></div><div class="ripple-flag"></div></div><div class="list-item" data-idx="29"><div class="mag-badge" style="background:rgba(232,195,77,.14);color:#e8c34d"><span class="m">4.5</span><span class="t">MAG</span></div><div class="body"><div class="loc">台湾台东县海域</div><div class="meta"><span>08-27 05:47</span><span>30 km</span><span>烈度 6</span></div></div><div class="ripple-flag"></div></div><div class="list-item" data-idx="30"><div class="mag-badge" style="background:rgba(232,138,61,.16);color:#e88a3d"><span class="m">5.3</span><span class="t">MAG</span></div><div class="body"><div class="loc">哥伦比亚</div><div class="meta"><span>08-27 00:45</span><span>150 km</span><span>烈度 5</span></div></div><div class="ripple-flag"></div></div><div class="list-item" data-idx="31"><div class="mag-badge" style="background:rgba(232,138,61,.16);color:#e88a3d"><span class="m">5.5</span><span class="t">MAG</span></div><div class="body"><div class="loc">台湾台东县海域</div><div class="meta"><span>08-25 15:00</span><span>10 km</span><span>烈度 7</span></div></div><div class="ripple-flag"></div></div><div class="list-item" data-idx="32"><div class="mag-badge" style="background:rgba(232,138,61,.16);color:#e88a3d"><span class="m">5.9</span><span class="t">MAG</span></div><div class="body"><div class="loc">印尼班达海</div><div class="meta"><span>08-24 22:10</span><span>10 km</span><span>烈度 8</span></div></div><div class="ripple-flag"></div></div><div class="list-item" data-idx="33"><div class="mag-badge" style="background:rgba(232,195,77,.14);color:#e8c34d"><span class="m">4.7</span><span class="t">MAG</span></div><div class="body"><div class="loc">四川宜宾市长宁县</div><div class="meta"><span>08-24 08:26</span><span>5 km</span><span>烈度 6</span></div></div><div class="ripple-flag"></div></div><div class="list-item" data-idx="34"><div class="mag-badge" style="background:rgba(229,72,77,.16);color:#e5484d"><span class="m">6.0</span><span class="t">MAG</span></div><div class="body"><div class="loc">日本北海道附近海域</div><div class="meta"><span>08-23 21:44</span><span>40 km</span><span>烈度 7</span></div></div><div class="ripple-flag"></div></div><div class="list-item" data-idx="35"><div class="mag-badge" style="background:rgba(232,195,77,.14);color:#e8c34d"><span class="m">4.2</span><span class="t">MAG</span></div><div class="body"><div class="loc">克什米尔</div><div class="meta"><span>08-23 18:04</span><span>10 km</span><span>烈度 6</span></div></div><div class="ripple-flag"></div></div><div class="list-item" data-idx="36"><div class="mag-badge" style="background:rgba(232,138,61,.16);color:#e88a3d"><span class="m">5.8</span><span class="t">MAG</span></div><div class="body"><div class="loc">日本本州岛</div><div class="meta"><span>08-23 01:00</span><span>70 km</span><span>烈度 6</span></div></div><div class="ripple-flag"></div></div><div class="list-item" data-idx="37"><div class="mag-badge" style="background:rgba(229,72,77,.16);color:#e5484d"><span class="m">6.0</span><span class="t">MAG</span></div><div class="body"><div class="loc">南极洲斯科舍海</div><div class="meta"><span>08-22 16:22</span><span>20 km</span><span>烈度 8</span></div></div><div class="ripple-flag"></div></div><div class="list-item" data-idx="38"><div class="mag-badge" style="background:rgba(232,195,77,.14);color:#e8c34d"><span class="m">4.5</span><span class="t">MAG</span></div><div class="body"><div class="loc">台湾宜兰县海域</div><div class="meta"><span>08-22 11:40</span><span>28 km</span><span>烈度 6</span></div></div><div class="ripple-flag"></div></div><div class="list-item" data-idx="39"><div class="mag-badge" style="background:rgba(83,196,184,.13);color:#53c4b8"><span class="m">3.1</span><span class="t">MAG</span></div><div class="body"><div class="loc">宁夏中卫市海原县</div><div class="meta"><span>08-21 05:01</span><span>14 km</span><span>烈度 5</span></div></div><div class="ripple-flag"></div></div></div>
+      <div class="status-line" id="statusLine"><span>数据源：api.wolfx.jp · 最近 50 条 · 已核对 md5 e1b6f68829abb36271992297d666b9c4</span></div>
+      <div class="replay">
+        <button class="btn" id="demoBtn" type="button">演示回放</button>
+        <button class="btn" id="importBtn" type="button">导入回放 JSON</button>
+        <input type="file" id="fileInput" accept=".json,application/json" hidden="">
+        <span class="info" id="replayInfo">回放模式：按时间顺序在地图上复现地震序列（仅本地演示）。</span>
+      </div>
+    </section>
+  </main>
+
+  <!-- ===== 页脚 ===== -->
+  <footer>
+    <p class="warn">免责声明：本页面为个人技术学习与演示项目，非中国地震台网官方发布。数据来自第三方公开镜像接口，可能存在延迟、缺失或误差。</p>
+    <p>本页面不提供地震预警、倒计时警报或避险建议功能。地震预警信息请以中国地震台网中心及各省地震局官方渠道为准（官方微信小程序、手机系统内置预警等）。</p>
+    <p>数据接口：api.wolfx.jp/cenc_eqlist.json（同步中国地震台网速报数据） · 本项目可自行部署至 GitHub Pages。</p>
+  </footer>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  /* ===== 常量与状态 ===== */
+  var API_URL = 'https://api.wolfx.jp/cenc_eqlist.json';
+  var AUTO_REFRESH_MS = 60000;
+  var SHOW_COUNT = 40;
+
+  var state = {
+    records: [],
+    filterMin: 0,
+    autoRefresh: true,
+    timer: null,
+    selectedId: null,
+    playing: false,
+    playTimer: null,
+    playIndex: 0,
+    playList: [],
+    loading: false
+  };
+
+  /* ===== 工具 ===== */
+  function $(id) { return document.getElementById(id); }
+
+  function magColor(m) {
+    if (m >= 6) return '#e5484d';
+    if (m >= 5) return '#e88a3d';
+    if (m >= 4) return '#e8c34d';
+    return '#53c4b8';
+  }
+  function magBg(m) {
+    if (m >= 6) return 'rgba(229,72,77,.16)';
+    if (m >= 5) return 'rgba(232,138,61,.16)';
+    if (m >= 4) return 'rgba(232,195,77,.14)';
+    return 'rgba(83,196,184,.13)';
+  }
+  function fmtTime(t) {
+    if (!t) return '--';
+    return String(t).replace('T', ' ').slice(0, 19);
+  }
+  function shortTime(t) {
+    var s = fmtTime(t);
+    return s.slice(5, 16);
+  }
+
+  /* 经纬度投影：等距圆柱近似，仅示意图 */
+  var PROJ = { x0: 70, y0: 55, s: 13 };
+  function px(lon) { return (lon - PROJ.x0) * PROJ.s; }
+  function py(lat) { return (PROJ.y0 - lat) * PROJ.s; }
+
+  /* 中国大陆简化轮廓（示意，无省界） */
+  var BORDER = [
+    [122.5, 53.5], [133.0, 48.8], [135.0, 48.2], [131.0, 42.8],
+    [124.2, 40.0], [121.2, 37.8], [122.6, 37.4], [121.0, 35.5],
+    [121.8, 34.5], [122.4, 31.0], [121.4, 29.0], [119.6, 26.4],
+    [117.2, 23.4], [110.6, 21.2], [108.2, 21.6], [106.2, 23.0],
+    [101.4, 21.4], [99.0, 24.5], [96.8, 28.2], [92.0, 28.3],
+    [88.5, 27.8], [84.0, 28.0], [80.0, 30.2], [78.0, 35.5],
+    [74.6, 37.2], [73.4, 39.8], [76.0, 43.0], [80.0, 45.0],
+    [85.5, 47.2], [91.0, 47.4], [87.0, 49.2], [96.0, 49.6],
+    [101.0, 47.8], [105.0, 49.5], [110.0, 49.8], [116.0, 50.5],
+    [119.0, 49.8], [120.0, 52.0], [122.5, 53.5]
+  ];
+  var ISLANDS = [
+    { cx: 109.5, cy: 19.2, rx: 1.1, ry: 2.0 },   // 海南
+    { cx: 121.0, cy: 23.8, rx: 0.9, ry: 1.7 }    // 台湾
+  ];
+
+  function borderPath() {
+    var d = '';
+    for (var i = 0; i < BORDER.length; i++) {
+      var x = px(BORDER[i][0]).toFixed(1), y = py(BORDER[i][1]).toFixed(1);
+      d += (i === 0 ? 'M' : 'L') + x + ' ' + y + ' ';
+    }
+    return d + 'Z';
+  }
+
+  /* ===== SVG 命名空间 ===== */
+  var SVG_NS = 'http://www.w3.org/2000/svg';
+  function el(tag, attrs, parent) {
+    var n = document.createElementNS(SVG_NS, tag);
+    for (var k in attrs) { n.setAttribute(k, attrs[k]); }
+    if (parent) { parent.appendChild(n); }
+    return n;
+  }
+
+  /* ===== 地图构建 ===== */
+  var mapSvg, mapGroup, quakeLayer;
+  var MAP_W = 900, MAP_H = 520;
+
+  function buildMap() {
+    mapSvg = $('mapSvg');
+    mapSvg.setAttribute('viewBox', '0 0 ' + MAP_W + ' ' + MAP_H);
+
+    /* 经纬度网格 */
+    for (var lon = 75; lon <= 135; lon += 10) {
+      el('line', { x1: px(lon), y1: py(55), x2: px(lon), y2: py(17), 'class': 'map-grid-line' }, mapSvg);
+    }
+    for (var lat = 20; lat <= 55; lat += 5) {
+      el('line', { x1: px(70), y1: py(lat), x2: px(136), y2: py(lat), 'class': 'map-grid-line' }, mapSvg);
+    }
+
+    /* 大陆轮廓 */
+    el('path', { d: borderPath(), 'class': 'map-border' }, mapSvg);
+    ISLANDS.forEach(function (is) {
+      el('ellipse', { cx: px(is.cx), cy: py(is.cy), rx: is.rx * PROJ.s, ry: is.ry * PROJ.s, 'class': 'map-island' }, mapSvg);
+    });
+
+    /* 图例说明文字 */
+    el('text', { x: 8, y: 20, fill: '#5b7387', 'font-size': 12, 'font-family': 'monospace' }, mapSvg).textContent = 'E70° — E135°';
+    el('text', { x: 8, y: 512, fill: '#5b7387', 'font-size': 12, 'font-family': 'monospace' }, mapSvg).textContent = 'N18° — N55°';
+
+    quakeLayer = document.createElementNS(SVG_NS, 'g');
+    mapSvg.appendChild(quakeLayer);
+  }
+
+  /* ===== 震波签名绘制 ===== */
+  function drawSeismo() {
+    var svg = $('seismoSvg');
+    var w = 1280, h = 44;
+    svg.setAttribute('viewBox', '0 0 ' + w + ' ' + h);
+    var pts = [];
+    var x = 0;
+    var amp = 0;
+    var phase = 0;
+    while (x <= w) {
+      amp = (x > 80 && x < w - 40) ? (Math.sin(x / 26) * 7 + Math.sin(x / 9) * 3) : 0;
+      pts.push(x.toFixed(1) + ',' + (h / 2 + amp).toFixed(1));
+      x += 6;
+    }
+    el('polyline', { points: pts.join(' '), 'class': 'trace' }, svg);
+    el('circle', { cx: w - 30, cy: h / 2, r: 2.6, 'class': 'cursor' }, svg);
+  }
+
+  /* ===== 数据获取 ===== */
+  function normalize(r) {
+    return {
+      time: r.time || '',
+      location: r.location || '未知地点',
+      magnitude: parseFloat(r.magnitude) || 0,
+      depth: parseFloat(r.depth) || 0,
+      latitude: parseFloat(r.latitude) || 0,
+      longitude: parseFloat(r.longitude) || 0,
+      intensity: (r.intensity === undefined || r.intensity === null || r.intensity === '') ? '—' : String(r.intensity)
+    };
+  }
+
+  function parsePayload(json) {
+    if (Array.isArray(json)) { return json.map(normalize); }
+    var arr = [];
+    for (var k in json) {
+      if (k !== 'md5' && json[k] && typeof json[k] === 'object') { arr.push(json[k]); }
+    }
+    return arr.map(normalize);
+  }
+
+  function setStatus(msg, isErr) {
+    $('statusLine').innerHTML = '<span' + (isErr ? ' class="err"' : '') + '>' + msg + '</span>';
+  }
+
+  function loadData() {
+    if (state.loading) { return; }
+    state.loading = true;
+    setStatus('正在连接台网数据源…');
+
+    fetch(API_URL)
+      .then(function (res) {
+        if (!res.ok) { throw new Error('HTTP ' + res.status); }
+        return res.json();
+      })
+      .then(function (json) {
+        state.records = parsePayload(json);
+        state.loading = false;
+        var now = new Date();
+        $('updateTime').textContent = now.toLocaleTimeString('zh-CN', { hour12: false });
+        setStatus('数据源：api.wolfx.jp · 最近 ' + state.records.length + ' 条 · 已核对 ' + (json.md5 ? 'md5 ' + json.md5 : '—'));
+        renderAll();
+      })
+      .catch(function (err) {
+        state.loading = false;
+        var proto = (location.protocol === 'file:');
+        var msg = proto
+          ? '当前是 file:// 本地文件模式，浏览器禁止跨域读取数据。请改用本地 HTTP 服务器打开（如 VS Code 的 Live Server），或部署到 GitHub Pages 后再访问。'
+          : '数据获取失败（' + err.message + '）。请检查网络后点击“刷新数据”重试；若为接口 CORS 或域名变更，可查看页脚说明。';
+        setStatus(msg, true);
+      });
+  }
+
+  /* ===== 渲染 ===== */
+  function filteredRecords() {
+    return state.records
+      .filter(function (r) { return r.magnitude >= state.filterMin; })
+      .slice(0, SHOW_COUNT);
+  }
+
+  function renderAll() {
+    renderMap();
+    renderList();
+  }
+
+  function renderMap() {
+    while (quakeLayer.firstChild) { quakeLayer.removeChild(quakeLayer.firstChild); }
+    var list = filteredRecords();
+    list.forEach(function (r, i) {
+      if (!r.latitude || !r.longitude) { return; }
+      var rpx = Math.max(3.2, Math.min(9, 2.6 + r.magnitude * 0.85));
+      var c = el('circle', {
+        cx: px(r.longitude), cy: py(r.latitude), r: rpx,
+        fill: magColor(r.magnitude), 'class': 'quake-dot',
+        'data-idx': i
+      }, quakeLayer);
+      c.addEventListener('click', function () { selectRecord(r, i); });
+    });
+    renderLegend(list);
+  }
+
+  function renderLegend(list) {
+    var legend = $('legend');
+    legend.innerHTML = '';
+    var items = [
+      { c: '#53c4b8', t: 'M<4' },
+      { c: '#e8c34d', t: 'M4–4.9' },
+      { c: '#e88a3d', t: 'M5–5.9' },
+      { c: '#e5484d', t: 'M≥6' }
+    ];
+    items.forEach(function (it) {
+      var s = document.createElement('span');
+      s.className = 'lg';
+      s.innerHTML = '<span class="sw" style="background:' + it.c + '"></span>' + it.t;
+      legend.appendChild(s);
+    });
+    var n = document.createElement('span');
+    n.textContent = '当前显示 ' + list.length + ' 个震中';
+    legend.appendChild(n);
+  }
+
+  function renderList() {
+    var list = filteredRecords();
+    var box = $('list');
+    box.innerHTML = '';
+    $('countLabel').textContent = list.length + ' 条';
+
+    if (!list.length) {
+      var e = document.createElement('div');
+      e.className = 'empty';
+      e.textContent = state.records.length ? '当前筛选条件下没有记录，试试降低震级筛选。' : '暂无数据，请刷新。';
+      box.appendChild(e);
+      return;
+    }
+
+    list.forEach(function (r, i) {
+      var item = document.createElement('div');
+      item.className = 'list-item';
+      item.setAttribute('data-idx', i);
+      item.innerHTML =
+        '<div class="mag-badge" style="background:' + magBg(r.magnitude) + ';color:' + magColor(r.magnitude) + '">' +
+          '<span class="m">' + r.magnitude.toFixed(1) + '</span>' +
+          '<span class="t">MAG</span>' +
+        '</div>' +
+        '<div class="body">' +
+          '<div class="loc"></div>' +
+          '<div class="meta"><span></span><span>深</span><span>烈度</span></div>' +
+        '</div>' +
+        '<div class="ripple-flag"></div>';
+      item.querySelector('.loc').textContent = r.location;
+      var meta = item.querySelector('.meta');
+      meta.children[0].textContent = shortTime(r.time);
+      meta.children[1].textContent = r.depth + ' km';
+      meta.children[2].textContent = '烈度 ' + r.intensity;
+      item.addEventListener('click', function () { selectRecord(r, i); });
+      box.appendChild(item);
+    });
+  }
+
+  /* ===== 选中与详情 ===== */
+  function selectRecord(r, i) {
+    state.selectedId = r.time + '|' + r.location + '|' + i;
+    highlightItem(i);
+    highlightDot(i);
+    showDetail(r);
+  }
+
+  function clearSelection() {
+    var items = document.querySelectorAll('.list-item.active');
+    items.forEach(function (n) { n.classList.remove('active'); });
+    var dots = document.querySelectorAll('.quake-dot.active');
+    dots.forEach(function (n) { n.classList.remove('active'); });
+    $('detail').classList.remove('show');
+  }
+
+  function highlightItem(i) {
+    var items = document.querySelectorAll('.list-item');
+    items.forEach(function (n) { n.classList.remove('active'); });
+    if (!items[i]) { return; }
+    items[i].classList.add('active');
+    /* 手动滚动到可视区域（列表容器为 .list） */
+    var box = document.querySelector('.list');
+    if (box) {
+      var top = items[i].offsetTop - box.offsetTop;
+      if (top < box.scrollTop) {
+        box.scrollTop = top;
+      } else if (top + items[i].offsetHeight > box.scrollTop + box.clientHeight) {
+        box.scrollTop = top + items[i].offsetHeight - box.clientHeight;
+      }
+    }
+  }
+
+  function highlightDot(i) {
+    var dots = document.querySelectorAll('.quake-dot');
+    dots.forEach(function (n) { n.classList.remove('active'); });
+    if (dots[i]) { dots[i].classList.add('active'); }
+  }
+
+  function showDetail(r) {
+    var d = $('detail');
+    d.classList.add('show');
+    d.innerHTML =
+      '<div class="mag-line">' +
+        '<span class="mag" style="color:' + magColor(r.magnitude) + '">' + r.magnitude.toFixed(1) + '<small> 级</small></span>' +
+        '<div><div class="loc">' + r.location + '</div></div>' +
+      '</div>' +
+      '<div class="fields">' +
+        '<div class="f"><div class="k">发震时间</div><div class="v">' + fmtTime(r.time) + '</div></div>' +
+        '<div class="f"><div class="k">震源深度</div><div class="v">' + r.depth + ' km</div></div>' +
+        '<div class="f"><div class="k">纬度</div><div class="v">' + r.latitude.toFixed(2) + '°N</div></div>' +
+        '<div class="f"><div class="k">经度</div><div class="v">' + r.longitude.toFixed(2) + '°E</div></div>' +
+        '<div class="f"><div class="k">最大烈度</div><div class="v">' + r.intensity + '</div></div>' +
+      '</div>';
+  }
+
+  /* ===== 涟漪动画 ===== */
+  function rippleAt(lon, lat) {
+    var c = el('circle', { cx: px(lon), cy: py(lat), r: 8, 'class': 'ripple' }, quakeLayer);
+    c.addEventListener('animationend', function () { quakeLayer.removeChild(c); });
+  }
+
+  /* ===== 回放 ===== */
+  function setReplayInfo(html) { $('replayInfo').innerHTML = html; }
+
+  function stopPlayback() {
+    if (state.playTimer) { clearTimeout(state.playTimer); state.playTimer = null; }
+    state.playing = false;
+    document.querySelectorAll('.list-item.playing').forEach(function (n) { n.classList.remove('playing'); });
+  }
+
+  function startPlayback(records) {
+    stopPlayback();
+    if (!records || !records.length) {
+      setReplayInfo('回放失败：没有可回放的记录。');
+      return;
+    }
+    var sorted = records.slice().sort(function (a, b) {
+      return new Date(a.time) - new Date(b.time);
+    });
+    state.playing = true;
+    state.playList = sorted;
+    state.playIndex = 0;
+    setReplayInfo('回放进行中…');
+
+    function step() {
+      if (!state.playing) { return; }
+      var i = state.playIndex;
+      if (i >= sorted.length) {
+        stopPlayback();
+        setReplayInfo('回放完成，共 ' + sorted.length + ' 条。');
+        return;
+      }
+      var r = sorted[i];
+      if (r.latitude && r.longitude) { rippleAt(r.longitude, r.latitude); }
+
+      /* 在列表/地图上定位对应记录 */
+      var list = filteredRecords();
+      var idx = -1;
+      for (var j = 0; j < list.length; j++) {
+        if (list[j].time === r.time && list[j].location === r.location) { idx = j; break; }
+      }
+      document.querySelectorAll('.list-item.playing').forEach(function (n) { n.classList.remove('playing'); });
+      if (idx >= 0) {
+        highlightItem(idx);
+        highlightDot(idx);
+        var items = document.querySelectorAll('.list-item');
+        if (items[idx]) { items[idx].classList.add('playing'); }
+      } else {
+        clearSelection();
+      }
+
+      setReplayInfo('回放 <b>' + (i + 1) + '/' + sorted.length + '</b>：' + r.location + '，M' + r.magnitude.toFixed(1) + '（' + shortTime(r.time) + '）');
+      state.playIndex += 1;
+      state.playTimer = setTimeout(step, 900);
+    }
+    step();
+  }
+
+  /* ===== 导入 JSON ===== */
+  function handleImport(file) {
+    var reader = new FileReader();
+    reader.onload = function () {
+      try {
+        var json = JSON.parse(reader.result);
+        var recs = parsePayload(json);
+        if (!recs.length) { throw new Error('空数据'); }
+        setReplayInfo('已导入 ' + recs.length + ' 条记录，开始回放。');
+        startPlayback(recs);
+      } catch (err) {
+        setReplayInfo('导入失败：JSON 格式无法识别（' + err.message + '）。支持 {No1:{…}} 对象或数组格式。');
+      }
+    };
+    reader.onerror = function () { setReplayInfo('导入失败：文件读取错误。'); };
+    reader.readAsText(file);
+  }
+
+  /* ===== 事件绑定 ===== */
+  function bindEvents() {
+    $('refreshBtn').addEventListener('click', loadData);
+
+    $('autoRefresh').addEventListener('change', function () {
+      state.autoRefresh = this.checked;
+      if (state.autoRefresh) {
+        startTimer();
+      } else {
+        clearInterval(state.timer);
+        state.timer = null;
+      }
+    });
+
+    document.querySelectorAll('.chip').forEach(function (chip) {
+      chip.addEventListener('click', function () {
+        document.querySelectorAll('.chip').forEach(function (c) { c.classList.remove('on'); });
+        chip.classList.add('on');
+        state.filterMin = parseFloat(chip.getAttribute('data-min')) || 0;
+        renderAll();
+      });
+    });
+
+    $('demoBtn').addEventListener('click', function () {
+      if (!state.records.length) { setReplayInfo('暂无数据，先刷新获取记录再回放。'); return; }
+      startPlayback(state.records.slice(0, 10));
+    });
+
+    $('importBtn').addEventListener('click', function () { $('fileInput').click(); });
+    $('fileInput').addEventListener('change', function (e) {
+      if (e.target.files && e.target.files[0]) { handleImport(e.target.files[0]); }
+      e.target.value = '';
+    });
+  }
+
+  function startTimer() {
+    if (state.timer) { clearInterval(state.timer); }
+    state.timer = setInterval(function () {
+      if (state.autoRefresh) { loadData(); }
+    }, AUTO_REFRESH_MS);
+  }
+
+  /* ===== 启动 ===== */
+  buildMap();
+  drawSeismo();
+  bindEvents();
+  startTimer();
+  loadData();
+})();
+</script>
+
+
+</body><div class="xl-chrome-ext-bar_4DB361DE-01F7-4376-B494-639E489D19ED" id="xl_chrome_ext_4DB361DE-01F7-4376-B494-639E489D19ED" data-v-app="" style="display: block;"><div class=""><div id="xl_chrome_ext_video_tag_wrapper_4DB361DE-01F7-4376-B494-639E489D19ED" config="[object Object]" uiversion="v2" exception="false" latestvideosrc="" isshowvideotag="false" isshowdownloadbar="true" isshowcloudaddbar="false"><div class="_video_op_wrapper_96mx8_1" config="[object Object]" uiversion="v2" style="display: none;"><ul class="_video_op_list_96mx8_17"><li class="_op_item_96mx8_39 _download_96mx8_45"><span class="_op_icon_96mx8_25"></span><span class="_op_text_96mx8_31">下载</span></li><li class="_op_item_96mx8_39 _screen_96mx8_51"><span class="_op_icon_96mx8_25"></span><span class="_op_text_96mx8_31">投屏</span></li></ul></div></div><div class="badge_wrapper_4DB361DE-01F7-4376-B494-639E489D19ED _badge_wrapper_wnbzb_1" id="badge_wrapper_4DB361DE-01F7-4376-B494-639E489D19ED"><div class="_logo_wnbzb_24"></div><span class="_line_wnbzb_32"></span><div class="_text_wrapper_wnbzb_39"><span class="_download_icon_wnbzb_51"></span><span class="_text_wnbzb_39">高速下载</span></div></div><!----><!----><!----><!----><div class="_container_wq4mj_4"><!----></div></div></div></html>
